@@ -194,7 +194,7 @@ Mục đích: Tự cấu hình và khởi động được một kho chứa, b�
 
   * Xem git trên máy cấu hình tới máy chủ nào
 
-    * > $ git remote
+    * > ​		$ git remote
 
     * Liệt kê ngắn gọn ccacs máy chủ từ xa đã được chỉ định, nếu sao chép từ kho chứa sẵn nó sẽ hiện bản gốc origin
 
