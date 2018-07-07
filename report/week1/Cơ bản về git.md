@@ -41,7 +41,9 @@ Mục đích: Tự cấu hình và khởi động được một kho chứa, b�
 
 * Ban đầu, khi tạo bản sao của một kho chứa, tất cả tập tin sẽ ở trạng thái tracked và unmodified
 
-  * Khi thay đổi tệp tin, các file cần được stage và sau đó commit tất cả các thay đổi đã được staged, quá trình này lập đi lăp lại
+  * Khi chỉnh sửa bất kì file nào file đó sẽ có trạng thái modified
+  * Sau khi thay đổi tệp tin, các file cần được stage ( git add) và sau đó commit tất cả các thay đổi đã được staged, quá trình này lập đi lăp lại
+  * "git rm --cached <file>..." to unstage
 
 * **Kiểm tra trạng thái của tập tin** 
 
