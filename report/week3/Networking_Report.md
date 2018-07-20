@@ -36,7 +36,7 @@
       - Application Layer (level 7): cung cấp ứng dụng cho người dùng cuối
     - Ý nghĩa: là mô hình tham chiếu chức năng, có ý nghĩa lớn về mặt cơ sở lý thuyết, các mô hình trên thực tế tham chiếu từ mô hình OSI
   - Mô hình TCP/IP 
-    - ![Chồng giao thức TCP/IP](C:\Users\vuduc\Desktop\HPCC_Lab\report\week3\images\tcp_ip_protocol.JPG)
+    - ![Chồng giao thức TCP/IP](https://github.com/vuducmanh11/HPCC_Lab/blob/master/report/week3/images/tcpip.png)
     - sử dụng duy nhất IP là giao thức liên mạng, tách rời phát triển ứng dụng ở tầng trên với công nghệ truyền dẫn tầng thấp
     - khó nâng cấp giao thức IP (IPv4 sang IPv6)
     - định danh
@@ -494,16 +494,14 @@ Các phương pháp chia VLAN
   - Trunk port
     - Được dùng để cho phép kết nối với một switch và hình thành trunk link. Frame trước khi đi qua trunk port sẽ được gán (tag) một vlan id vào frame để switch ở đầu bên kia biết cần đẩy frame này đến các port thuộc vlan nào 
 
-  ![trunk port image](C:\Users\vuduc\Desktop\HPCC_Lab\report\week3\images\trunk-port.JPG)
+  ![trunk port image](https://github.com/vuducmanh11/HPCC_Lab/blob/master/report/week3/images/trunk-port.JPG)
 
   - Access port
     - Access port chỉ thuộc về một vlan duy nhât. Access port thường dùng để nối với các thiết bị đầu cuối của người dùng hoặc các switch không hỗ trợ vlan. Trước khi đẩy frame đến một access port, vlan id trên frame sẽ bị gỡ bỏ
 
-  ![trunk port image](C:\Users\vuduc\Desktop\HPCC_Lab\report\week3\images\trunk-port.JPG)
-
 - Quá trình chuyển frame
 
-  - ![image](C:\Users\vuduc\Desktop\HPCC_Lab\report\week3\images\forward frame vlan.JPG)
+  - ![image](https://github.com/vuducmanh11/HPCC_Lab/blob/master/report/week3/images/forward%20frame%20vlan.JPG)
   - Mỗi switch có một vlan database: định nghĩa tất cả vlan mà switch có; một nhóm port sẽ nằm trong một vlan, mỗi port chỉ được định nghĩa nằm trong một vlan duy nhất ngoại trừ trunk port
   - Khi máy tính trong vlan2 gửi frame (broadcast hoặc unicast frame tùy vào thông tin trong bảng CAM của switch ), frame sẽ được send đến trunk port. Tại đây, frame được tag thêm một vlan id để nhận diện. Sau khi đi xuyên qua trunk link, frame được switch đầu bên kia gỡ tag vlan id trước khi đẩy vào các access port thuộc vlan 2
 
@@ -533,7 +531,7 @@ Các phương pháp chia VLAN
 
 - VXLAN sử dụng MAC Address-in-User Datagram Protocol (MAC-in-UDP) đóng gói để mở rộng layer 2 segment để đi qua data center
 - VXLAN encapsulate MAC-in-UDP từ khung tin layer2 và thêm VXLAN header, sau đó đặt trong gói tin UDP-IP
-- ![packet_vxlan_image](/home/manhvu/Desktop/VXLANpacketformat.png)
+- ![packet_vxlan_image](https://github.com/vuducmanh11/HPCC_Lab/blob/master/report/week3/images/VXLANpacketformat.png)
 - VXLAN header: 8 byte bao gồm các trường
   - Flags: 8bit, trong đó bit thứ 5 (I flag) được thiết lập 1 để chỉ ra đó là frame có VNI có giá trị; 7bit còn lại dùng dự trữ được thiết lập 0
   - VNI: 24bit, cung cấp định danh duy nhất cho VXLAN segment
@@ -543,14 +541,14 @@ Các phương pháp chia VLAN
 
 #### VTEP-Virtual Tunnel Endpoints
 
-- ![vtep_image](/home/manhvu/Desktop/white-paper-c11-729383_2.jpg)
+- ![vtep_image](https://github.com/vuducmanh11/HPCC_Lab/blob/master/report/week3/images/white-paper-c11-729383_2.jpg)
 - VXLAN sử dụng thiết bị VTEP để map thiết bị cuối với đoạn tin VXLAN để encapsulation và de-encapsulation các gói tin vận chuyển và ánh xạ các máy trong VXLAN. VTEP cung cấp hai interface một là switch interace trong mạng LAN để hỗ trợ điểm cuối giao tiếp thông qua cầu nối, giao diện thứ hai là IP interface với địa chỉ IP duy nhất xác đinh thiết bị VTEP. Địa chỉ IP của VTEP để đúng gói trong khung tin Ethernet và chuyển gói tin đã được đóng gói thông qua IP interface
 
 #### VXLAN Packet Forwarding Flow
 
 - VXLAN sử dụng stateless tunnel giữa các VTEP để chuyển tiếp gói tin trên mạng 
 
-  ![forwarding](/home/manhvu/Desktop/vxlan_forward.jpg)
+  ![forwarding](https://github.com/vuducmanh11/HPCC_Lab/blob/master/report/week3/images/vxlan_forward.jpg)
 
   - Host A tạo frame 1(L2 Frame) với các trường IP và MAC
   - frame 1 được chuyển đến VTEP-1, tại VTEP-1 dựa vào bảng ánh xạ cho biết host B tại VTEP-2. VTEP-1 đóng gói thêm các trường VXLAN, UDP, outer IP header vào L2 Frame. VTEP-1 sau đó tra cứu địa chỉ VTEP-2 (lấy ở outer IP header) để chọn đường tiếp theo cho gói tin, sau đó sử dụng địa chỉ MAC của nút kế tiếp đóng gói vào gói tin và gửi tới nút kế tiếp
@@ -620,13 +618,13 @@ Các phương pháp chia VLAN
 
       - kiểu truyền thống truyền gói tin đến một địa chỉ nhất địch 
 
-        ![point-to-point-image](C:\Users\vuduc\Desktop\HPCC_Lab\report\week3\images\point_to_point_GRE.png)
+        ![point-to-point-image](https://github.com/vuducmanh11/HPCC_Lab/blob/master/report/week3/images/point_to_point_GRE.png)
 
     - Point-to-multipoint: 
 
       - truyền gói tin từ một địa chỉ đến địa chỉ multicast
       - Vì chưa xác định được điểm cuối, nó cần xác định qua giao thức trung gian để ánh xạ địa chỉ tunnel sang cổng vật lý Next Hop Resolution Protocol (NHRP)
-      - ![point-to-multipoint-image](C:\Users\vuduc\Desktop\HPCC_Lab\report\week3\images\point_to_multipoint_GRE.png)
+      - ![point-to-multipoint-image](https://github.com/vuducmanh11/HPCC_Lab/blob/master/report/week3/images/point_to_multipoint_GRE.png)
 
 
 
