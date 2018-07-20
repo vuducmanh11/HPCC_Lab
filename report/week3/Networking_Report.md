@@ -525,6 +525,37 @@ Các phương pháp chia VLAN
 
 ### 8. Virtual Extensible LAN (VXLAN)
 
+#### Khái niệm
+
+- VXLAN cung cấp dịch vụ để kết nối Ethernet tới các thiết bị cuối như VLAN nhưng mở rộng hơn về quy mô và khả năng triển khai; tạo mạng vật lý layer 2 dựa trên lớp mạng IP
+
+#### Packet VXLAN
+
+- VXLAN sử dụng MAC Address-in-User Datagram Protocol (MAC-in-UDP) đóng gói để mở rộng layer 2 segment để đi qua data center
+- VXLAN encapsulate MAC-in-UDP từ khung tin layer2 và thêm VXLAN header, sau đó đặt trong gói tin UDP-IP
+- ![packet_vxlan_image](/home/manhvu/Desktop/VXLANpacketformat.png)
+- VXLAN header: 8 byte bao gồm các trường
+  - Flags: 8bit, trong đó bit thứ 5 (I flag) được thiết lập 1 để chỉ ra đó là frame có VNI có giá trị; 7bit còn lại dùng dự trữ được thiết lập 0
+  - VNI: 24bit, cung cấp định danh duy nhất cho VXLAN segment
+- Outer UDP Header: port nguồn của Outer UDP được gán tự động sinh ra bởi VTEP và port đích 
+- Outer IP Header: cung cấp địa chỉ IP nguồn của VTEP và địa chỉ đích của VTEP nhận frame
+- Outer Ethernet Header: cung cấp địa chỉ MAC nguồn của VTEP chứa khung frame ban đầu. Địa chỉ MAC đích là địa chỉ của hop tiếp theo được định tuyến với VTEP
+
+#### VTEP-Virtual Tunnel Endpoints
+
+- ![vtep_image](/home/manhvu/Desktop/white-paper-c11-729383_2.jpg)
+- VXLAN sử dụng thiết bị VTEP để map thiết bị cuối với đoạn tin VXLAN để encapsulation và de-encapsulation các gói tin vận chuyển và ánh xạ các máy trong VXLAN. VTEP cung cấp hai interface một là switch interace trong mạng LAN để hỗ trợ điểm cuối giao tiếp thông qua cầu nối, giao diện thứ hai là IP interface với địa chỉ IP duy nhất xác đinh thiết bị VTEP. Địa chỉ IP của VTEP để đúng gói trong khung tin Ethernet và chuyển gói tin đã được đóng gói thông qua IP interface
+
+#### VXLAN Packet Forwarding Flow
+
+- VXLAN sử dụng stateless tunnel giữa các VTEP để chuyển tiếp gói tin trên mạng 
+
+  ![forwarding](/home/manhvu/Desktop/vxlan_forward.jpg)
+
+  - Host A tạo frame 1(L2 Frame) với các trường IP và MAC
+  - frame 1 được chuyển đến VTEP-1, tại VTEP-1 dựa vào bảng ánh xạ cho biết host B tại VTEP-2. VTEP-1 đóng gói thêm các trường VXLAN, UDP, outer IP header vào L2 Frame. VTEP-1 sau đó tra cứu địa chỉ VTEP-2 (lấy ở outer IP header) để chọn đường tiếp theo cho gói tin, sau đó sử dụng địa chỉ MAC của nút kế tiếp đóng gói vào gói tin và gửi tới nút kế tiếp
+  - Gói tin được định tuyến theo địa chỉ IP chuyển tới VTEP-2. VTEP-2 nhận được gói tin loại bỏ outer IP header, UDP, VXLAN header, đọc thông tin và chuyển gói tin tới máy B theo địa chỉ MAC đích trong L2 frame
+
 ### 9. Generic routing encapsulation (GRE)
 
 - Khái niệm
