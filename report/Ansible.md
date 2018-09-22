@@ -1,3 +1,17 @@
+# Table of contents
++ [About Ansible](#about-ansible)
++ [Installation](#installation)
++ [Using Ansible](#using-ansible)
+    + [Ad-Hoc Commands](#ad-hoc-commands)
+    + [Playbook](#playbook)
+    + [Inventory file](#inventory-file)
+    + [Hosts and Groups](#hosts-and-groups)
+    + [Host Variables](#host-variables)
+    + [Groups of Groups, and Group Variables](#groups-of-groups,-and-group-variables)
+    + [Default groups](#default-groups)
+    + [Splitting Out Host and Group Specific Data](#splitting-out-hostand-group-specific-data)
+    + [How Variables Are Merged](#how-variables-are-merged)
+
 # Ansible
 ## About Ansible
 Ansible là một IT automation tool. Nó có thể cấu hình hệ thống, triển khai phần mềm và orchestrate nhiều task IT phức tạp như các triển khai liên tục hoặc giảm thời gian update xuống 0.

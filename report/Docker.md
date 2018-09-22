@@ -8,43 +8,11 @@ Table of content
     + [Docker objects](#docker-objects)
         + [Images](#images)
         + [Container](#container)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+	+ [Docker Volume](#docker-volume)
+    + [Dockerfile](#dockerfile)
+	+ [Docker command](#docker-command)
++ [Docker Compose](#docker-compose)
+	
 
 # Docker
 
@@ -207,10 +175,7 @@ CMD ["/bin/bash", "echo", "Hello World"]
 - ```docker images```: liệt kê các images 
 - ```docker ps```: liệt kê các container đang chạy
 - ```docker ps -a```: liệt kê tất cả container đã tắt 
-- ```docker rm -f 
-  
-  ```
-## Docker-compose
+### Docker-compose
 Docker compose cho phép chạy ứng dụng trên Docker multi-container. Sử dụng compose file để cấu hình các service cho ứng dụng. Để chạy ứng dụng chỉ cần lệnh ```docker-compose up```.
 Một số command:
 + docker-compose version: kiểm tra version
