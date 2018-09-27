@@ -9,6 +9,7 @@ Table of content
         + [Images](#images)
         + [Container](#container)
 	+ [Docker Volume](#docker-volume)
+	+ [Docker Network](#docker-network)
     + [Dockerfile](#dockerfile)
 	+ [Docker command](#docker-command)
 + [Docker Compose](#docker-compose)
@@ -105,8 +106,8 @@ docker run -d \
   -v myvol2:/app \
   nginx:latest
 ```
-##### Docker network 
-
+##### Docker Network 
+[docker network](https://github.com/vuducmanh11/HPCC_Lab/blob/master/report/Docker_Network.md)
 ### Dockerfile
 - ```FROM``` bắt đầu Dockerfile. Nó được yêu cầu rằng Dockerfile phải bắt đầu với lệnh ```FROM```. Các Image có được tạo trong các lớp nghĩa là bạn có có thể sử dụng một image khác như base image cho image của bạn. Lệnh ```FROM``` định nghĩa lớp cơ sở của bạn. Như một tham số, nó lấy tên của image. Tuỳ chọn, bạn có thể thêm Docker Cloud username của maintainer và image version, trong định dạng ```username/imagename:version```.
 - ```RUN``` được sử dung để build up một Image mà bạn tạo. Mỗi lệnh ```RUN```, Docker sẽ chạy command sau đó tạo một lớp mới của image. Cách này bạn có thể cuộn image của bạn trở lại trạng thái trước dễ dàng. Cú pháp cho lệnh RUN đặt full text của lệnh shell sau RUN (e.g. ```RUN mkdir /user/local/foo```). Việc này sẽ tự động chạy trong shell ```/bin/sh```. Bạn có thể định nghĩa một shell khác giống nó ```RUN /bin/bash -c 'mkdir /user/local/foo'```
