@@ -64,14 +64,14 @@ Volume là kỹ thuật ưu tiên để duy trì dữ liệu được tạo và 
 + Volume dễ dàng hơn để back up hoặc migrate so với bind mounts
 + Ta có thể quản lý volume sử dụng Docker CLI command hoặc Docker API 
 + Volume làm việc trên cả Linux và Window container
-+ Volume an toàn hơn khi chia sẻ dữ liệu giữa các container 
++ Volume có thể sử dụng bởi nhiều container, dữ liệu không bị mất nếu xoá container nên an toàn khi chia sẻ dữ liệu giữa các container 
 + Volume driver cho phép bạn lưu trữ volume trên remote host hoặc cloud provider, để mã hoá nội dung của Volume hoặc thêm các chức năng khác
 + Volume mới có thể có nội dung được dựng sẵn bởi một container
 
 Hơn nữa, volume là lựa chọn tốt hơn persisting data trong một lớp được ghi bởi container, do volume không làm tăng kích thước của container sử dụng nó.
 ![docker-volume.png](images/docker-volume.png)
 
-Để sử dụng volume ta có thể dùng tuỳ chọn ```-v``` hoặc ```--volume``` cho dạng chuẩn container và ```--mount``` khi sử dụng swarm service. Tuy nhiên, từ Docker 17.06, bạn có thể sử dụng ```-0mount``` với container chuẩn. 
+Để sử dụng volume ta có thể dùng tuỳ chọn ```-v``` hoặc ```--volume``` cho dạng chuẩn container và ```--mount``` khi sử dụng swarm service. Tuy nhiên, từ Docker 17.06, bạn có thể sử dụng ```-0mount``` với container chuẩn. Khi sử dụng volume, container thực hiện đọc ghi liên tục folder host machine, thư mục trong container sẽ ánh xạ vào volume, khi xoá một file trong volume hoặc container thì file đó sẽ mất ở cả hai.
 + ```-v``` hoặc ```--volume```: bao gồm 3 trường, tách nhau bởi dấu hai chấm.
   + tên volume định danh trên máy chủ. Với volume ẩn danh, có thể bỏ qua
   + path của file hoặc directory được mount trong container
@@ -105,6 +105,7 @@ docker run -d \
   -v myvol2:/app \
   nginx:latest
 ```
+##### Docker network 
 
 ### Dockerfile
 - ```FROM``` bắt đầu Dockerfile. Nó được yêu cầu rằng Dockerfile phải bắt đầu với lệnh ```FROM```. Các Image có được tạo trong các lớp nghĩa là bạn có có thể sử dụng một image khác như base image cho image của bạn. Lệnh ```FROM``` định nghĩa lớp cơ sở của bạn. Như một tham số, nó lấy tên của image. Tuỳ chọn, bạn có thể thêm Docker Cloud username của maintainer và image version, trong định dạng ```username/imagename:version```.
