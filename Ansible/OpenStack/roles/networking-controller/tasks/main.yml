@@ -1,0 +1,332 @@
+---
+- name: Access DB 
+  command: mysql -u root -padmin
+- name: Create DB Neutron
+  command: "{{ item }}"
+  with_items:
+    - GRANT ALL PRIVILEGES ON neutron.* TO 'neutron'@'localhost' IDENTIFIED BY 'admin';
+    - GRANT ALL PRIVILEGES ON neutron.* TO 'neutron'@'%' IDENTIFIED BY 'admin';
+    - FLUSH PRIVILEGES;
+    - exit;
+- name: Source admin credential
+  command: . admin-openrc
+- name: Create neutron user
+  command: openstack user create --domain default --password admin neutron
+- name: Add admin role to neutron user
+  command: openstack role add --project service --user neutron admin
+- name: Create neutron service entity
+  command: openstack service create --name neutron --description "OpenStack Networking" network
+- name: Create Networking service API endpoints
+  commadn: "{{ item }}"
+  with_items:
+    - openstack endpoint create --region RegionOne network public http://controller:9696
+    - openstack endpoint create --region RegionOne network internal http://controller:9696
+    - openstack endpoint create --region RegionOne network admin http://controller:9696
+- name: Install component self-service network
+  apt:
+    name: "{{ item }}"
+    state: present 
+  with_items:
+    - neutron-server
+    - neutron-plugin-ml2
+    - neutron-linuxbridge-agent
+    - neutron-l3-agent
+    - neutron-dhcp-agent
+    - neutron-metadata-agent
+- name: Configure server component
+  init_files:
+    path: /etc/neutron/neutron.conf
+    section: database
+    option: connection
+    value: mysql+pymysql://neutron:admin@controller/neutron
+    backup: yes
+- name: Configure server component
+  init_files:
+    path: /etc/neutron/neutron.conf
+    section: DEFAULT
+    option: core_plugin
+    value: ml2
+- name: Configure server component
+  init_files:
+    path: /etc/neutron/neutron.conf
+    section: DEFAULT
+    option: service_plugins
+    value: router
+- name: Configure server component
+  init_files:
+    path: /etc/neutron/neutron.conf
+    section: DEFAULT
+    option: allow_overlapping_ips
+    value: true
+- name: Configure server component
+  init_files:
+    path: /etc/neutron/neutron.conf
+    section: DEFAULT
+    option: transport_url
+    value: transport_url = rabbit://openstack:admin@controller
+- name: Configure server component
+  init_files:
+    path: /etc/neutron/neutron.conf
+    section: DEFAULT
+    option: auth_strategy
+    value: keystone
+- name: Configure server component
+  init_files:
+    path: /etc/neutron/neutron.conf
+    section: keystone_authtoken
+    value: |
+      auth_uri = http://controller:5000
+      auth_url = http://controller:35357
+      memcached_servers = controller:11211
+      auth_type = password
+      project_domain_name = default
+      user_domain_name = default
+      project_name = service
+      username = neutron
+      password = admin
+- name: Configure server component
+  init_files:
+    path: /etc/neutron/neutron.conf
+    section: DEFAULT
+    option: notify_nova_on_port_status_changes
+    value: true
+- name: Configure server component
+  init_files:
+    path: /etc/neutron/neutron.conf
+    section: DEFAULT
+    option: notify_nova_on_port_data_changes
+    value: true
+- name: Configure server component
+  init_files:
+    path: /etc/neutron/neutron.conf
+    section: nova
+    option: auth_url
+    value: http://controller:35357
+- name: Configure server component
+  init_files:
+    path: /etc/neutron/neutron.conf
+    section: nova
+    option: auth_type
+    value: password
+- name: Configure server component
+  init_files:
+    path: /etc/neutron/neutron.conf
+    section: nova
+    option: project_domain_name
+    value: default
+- name: Configure server component
+  init_files:
+    path: /etc/neutron/neutron.conf
+    section: nova
+    option: user_domain_name
+    value: default
+- name: Configure server component
+  init_files:
+    path: /etc/neutron/neutron.conf
+    section: nova
+    option: region_name
+    value: RegionOne
+- name: Configure server component
+  init_files:
+    path: /etc/neutron/neutron.conf
+    section: nova
+    option: project_name
+    value: service
+- name: Configure server component
+  init_files:
+    path: /etc/neutron/neutron.conf
+    section: nova
+    option: username
+    value: nova
+- name: Configure server component
+  init_files:
+    path: /etc/neutron/neutron.conf
+    section: nova
+    option: password
+    value: admin
+- name: Configure Modular Layer 2 (ML2) plug-in
+  init_files:
+    path: /etc/neutron/plugins/ml2/ml2_conf.ini
+    section: ml2
+    option: type_drivers
+    value: flat,vlan,vxlan
+    backup: yes
+- name: Configure Modular Layer 2 (ML2) plug-in
+  init_files:
+    path: /etc/neutron/plugins/ml2/ml2_conf.ini
+    section: ml2
+    option: tenant_network_types
+    value: vxlan
+- name: Configure Modular Layer 2 (ML2) plug-in
+  init_files:
+    path: /etc/neutron/plugins/ml2/ml2_conf.ini
+    section: ml2
+    option: mechanism_drivers
+    value: linuxbridge,l2population
+- name: Configure Modular Layer 2 (ML2) plug-in
+  init_files:
+    path: /etc/neutron/plugins/ml2/ml2_conf.ini
+    section: ml2
+    option: extension_drivers
+    value: port_security
+- name: Configure Modular Layer 2 (ML2) plug-in
+  init_files:
+    path: /etc/neutron/plugins/ml2/ml2_conf.ini
+    section: ml2_type_flat
+    option: flat_networks
+    value: provider
+- name: Configure Modular Layer 2 (ML2) plug-in
+  init_files:
+    path: /etc/neutron/plugins/ml2/ml2_conf.ini
+    section: ml2_type_vxlan
+    option: vni_ranges
+    value: 1:1000
+- name: Configure Modular Layer 2 (ML2) plug-in
+  init_files:
+    path: /etc/neutron/plugins/ml2/ml2_conf.ini
+    section: securitygroup
+    option: enable_ipse
+    value: true
+- name: Configure Linux bridge agent
+  init_files:
+    path: /etc/neutron/plugins/ml2/linuxbridge_agent.ini
+    section: linux_bridge
+    option: physical_interface_mappings
+    value: provider:ens7
+    backup: yes
+- name: Config vxlan section
+  init_files:
+    path: /etc/neutron/plugins/ml2/linuxbridge_agent.ini
+    section: vxlan
+    option: enable_vxlan
+    value: true
+- name: Config continue
+  init_files:
+    path: /etc/neutron/plugins/ml2/linuxbridge_agent.ini
+    section: vxlan
+    option: local_ip
+    value: 192.168.122.10
+- name: Config continue
+  init_files:
+    path: /etc/neutron/plugins/ml2/linuxbridge_agent.ini
+    section: vxlan
+    option: l2_population
+    value: yes
+- name: Config security group
+  init_files:
+    path: /etc/neutron/plugins/ml2/linuxbridge_agent.ini
+    section: securitygroup
+    option: enable_security_group
+    value: true
+- name: Config continue
+  init_files:
+    path: /etc/neutron/plugins/ml2/linuxbridge_agent.ini
+    section: securitygroup
+    option: firewall_driver
+    value: neutron.agent.linux.iptables_firewall.IptablesFirewallDriver
+- name: Configure layer3 agent
+  init_files:
+    path: /etc/neutron/l3_agent.ini
+    section: DEFAULT
+    option: interface_driver
+    value: linuxbridge
+    backup: yes
+- name: Configure DHCP agent
+  init_files:
+    path: /etc/neutron/dhcp_agent.ini
+    section: DEFAULT
+    option: interface_driver
+    value: linuxbridge
+    backup: yes
+- name: Configure DHCP agent
+  init_files:
+    path: /etc/neutron/dhcp_agent.ini
+    section: DEFAULT
+    option: dhcp_driver
+    value: neutron.agent.linux.dhcp.Dnsmasq
+- name: Configure DHCP agent
+  init_files:
+    path: /etc/neutron/dhcp_agent.ini
+    section: DEFAULT
+    option: enable_isolated_metadata
+    value: true
+- name: Configure Compute service use Networking service
+  init_files:
+    path: /etc/nova/nova.conf
+    section: neutron
+    option: url
+    value: http://controller:9696
+    backup: yes
+- name: Config continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: neutron
+    option: auth_url
+    value: http://controller:35357
+- name: Config continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: neutron
+    option: auth_type
+    value: password
+- name: Config continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: neutron
+    option: project_domain_name
+    value: default
+- name: Config continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: neutron
+    option: user_domain_name
+    value: default 
+- name: Config continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: neutron
+    option: region_name
+    value: RegionOne
+- name: Config continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: neutron
+    option: project_name
+    value: service
+- name: Config continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: neutron
+    option: username
+    value: neutron
+- name: Config continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: neutron
+    option: password
+    value: admin
+- name: Config continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: neutron
+    option: service_metadata_proxy
+    value: true
+- name: Config continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: neuton
+    option: metadata_proxy_shared_secret
+    value: admin
+
+- name: Populate database 
+  command: su -s /bin/sh -c "neutron-db-manage --config-file /etc/neutron/neutron.conf  --config-file /etc/neutron/plugins/ml2/ml2_conf.ini upgrade head" neutron
+- name: Restart sevices
+  command: "{{ item }}"
+  with_items:
+    - service nova-api restart
+    - service neutron-server restart
+    - service neutron-linuxbridge-agent restart
+    - service neutron-dhcp-agent restart
+    - service neutron-metadata-agent restart
+    - service neutron-l3-agent restart
+

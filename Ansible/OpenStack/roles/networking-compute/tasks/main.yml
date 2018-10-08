@@ -1,0 +1,134 @@
+---
+- name: Install components
+  apt:
+    name: neutron-linuxbridge-agent
+    state: present
+- name: Configure common component
+  init_files:
+    path: /etc/neutron/neutron.conf
+    section: database
+    option: connection
+    backup: yes
+- name: Configure Default section
+  init_files:
+    path: /etc/neutron/neutron.conf
+    section: DEFAULT
+    option: transport_url
+    value: rabbit://openstack:admin@controller
+- name: Config continue
+  init_files:
+    path: /etc/neutron/neutron.conf
+    section: DEFAULT
+    option: auth_strategy
+    value: keystone
+- name: Configure keystone_authtoken
+  init_files:
+    path: /etc/neutron/neutron.conf
+    section: keystone_authtoken
+    value: |
+      auth_uri = http://controller:5000
+      auth_url = http://controller:35357
+      memcached_servers = controller:11211
+      auth_type = password
+      project_domain_name = default
+      user_domain_name = default
+      project_name = service
+      username = neutron
+      password = admin
+- name: Configure Linux bridge agent
+  init_files:
+    path: /etc/neutron/plugins/ml2/linuxbridge_agent.ini
+    section: linux_bridge
+    option: physical_interface_mappings
+    value: provider:ens7
+    backup: yes
+- name: Configure vxlan section
+  init_files: 
+    path: /etc/neutron/plugins/ml2/linuxbridge_agent.ini
+    section: vxlan
+    option: enable_vxlan 
+    value: true
+- name: Configure vxlan section
+  init_files: 
+    path: /etc/neutron/plugins/ml2/linuxbridge_agent.ini
+    section: vxlan
+    option: local_ip
+    value: 192.168.122.11
+- name: Configure vxlan section
+  init_files: 
+    path: /etc/neutron/plugins/ml2/linuxbridge_agent.ini
+    section: vxlan
+    option: l2_population
+    value: true
+- name: Configure vxlan securitygroup
+  init_files: 
+    path: /etc/neutron/plugins/ml2/linuxbridge_agent.ini
+    section: securitygroup
+    option: enable_security_group
+    value: true
+- name: Configure vxlan securitygroup
+  init_files: 
+    path: /etc/neutron/plugins/ml2/linuxbridge_agent.ini
+    section: securitygroup
+    option: firewall_driver
+    value: neutron.agent.linux.iptables_firewall.IptablesFirewallDriver
+- name: Configure Compute service to use Networking service 
+  init_files:
+    path: /etc/nova/nova.conf
+    section: neutron
+    option: url
+    value: http://controller:9696
+    backup: yes
+- name: Configure continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: neutron
+    option: auth_url
+    value: http://controller:35357
+- name: Configure continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: neutron
+    option: auth_type
+    value: password
+- name: Configure continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: neutron
+    option: project_domain_name
+    value: default
+- name: Configure continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: neutron
+    option: user_domain_name
+    value: default
+- name: Configure continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: neutron
+    option: region_name
+    value: RegionOne
+- name: Configure continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: neutron
+    option: project_name
+    value: service
+- name: Configure continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: neutron
+    option: username
+    value: neutron
+- name: Configure continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: neutron
+    option: password
+    value: admin
+- name: Finalize installation
+  command: "{{ item }}"
+  with_items:
+    - service nova-compute restart
+    - service neutron-linuxbridge-agent restart

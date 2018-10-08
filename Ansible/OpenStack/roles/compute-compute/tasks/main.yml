@@ -1,0 +1,196 @@
+---
+- name: Install package
+  apt: 
+    name: nova-compute
+    state: present
+- name: Edit /etc/nova/nova.conf
+  init_files:
+    path: /etc/nova/nova.conf
+    section: DEFAULT
+    option: transport_url
+    value: rabbit://openstack:admin@controller
+    backup: yes 
+- name: Edit continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: api
+    option: auth_strategy
+    value: keystone
+- name: Edit continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: keystone_authtoken
+    option: auth_uri
+    value: http://controller:5000
+- name: Edit continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: keystone_authtoken
+    option: auth_url
+    value: http://controller:35357
+- name: Edit continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: keystone_authtoken
+    option: memcached_servers
+    value: controller:11211
+- name: Edit continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: keystone_authtoken
+    option: auth_type
+    value: password
+- name: Edit continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: keystone_authtoken
+    option: project_domain_name
+    value: default
+- name: Edit continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: keystone_authtoken
+    option: user_domain_name
+    value: default
+- name: Edit continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: keystone_authtoken
+    option: project_name
+    value: service
+- name: Edit continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: keystone_authtoken
+    option: username
+    value: nova
+- name: Edit continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: keystone_authtoken
+    option: password
+    value: admin
+- name: Edit continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: DEFAULT
+    option: my_ip
+    value: 10.10.0.11 
+- name: Edit continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: DEFAULT
+    option: use_neutron
+    value: True
+- name: Edit continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: DEFAULT
+    option: firewall_driver
+    value: nova.virt.firewall.NoopFirewallDriver
+- name: Edit continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: vnc
+    option: enabled
+    value: True
+- name: Edit continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: vnc
+    option: vncserver_listen
+    value: 0.0.0.0
+- name: Edit continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: vnc
+    option: vncserver_proxyclient_address
+    value: $my_ip
+- name: Edit continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: vnc
+    option: novncproxy_base_url
+    value: http://controller:6080/vnc_auto.html
+- name: Edit continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: glance
+    option: api_servers
+    value: http://controller:9292
+- name: Edit continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: oslo_concurrency
+    option: lock_path
+    value: /var/lib/nova/tmp
+- name: Remove log_dir
+  init_files:
+    path: /etc/nova/nova.conf
+    section: DEFAULT
+    option: log_dir 
+- name: Configure Placement API
+  init_files:
+    path: /etc/nova/nova.conf
+    section: placement
+    option: os_region_name
+    value: RegionOne
+- name: Configure Placement API
+  init_files:
+    path: /etc/nova/nova.conf
+    section: placement
+    option: project_domain_name
+    value: Default
+- name: Configure Placement API
+  init_files:
+    path: /etc/nova/nova.conf
+    section: placement
+    option: project_name
+    value: service
+- name: Configure Placement API
+  init_files:
+    path: /etc/nova/nova.conf
+    section: placement
+    option: auth_type
+    value: password
+- name: Configure Placement API
+  init_files:
+    path: /etc/nova/nova.conf
+    section: placement
+    option: user_domain_name
+    value: Default
+- name: Configure Placement API
+  init_files:
+    path: /etc/nova/nova.conf
+    section: placement
+    option: auth_url
+    value: http://controller:35357/v3
+- name: Configure Placement API
+  init_files:
+    path: /etc/nova/nova.conf
+    section: placement
+    option: username
+    value: placement
+- name: Configure Placement API
+  init_files:
+    path: /etc/nova/nova.conf
+    section: placement
+    option: password
+    value: admin
+- name: Determine whether your compute node support hardware acceleration for VM
+  shell: egrep -c '(vmx|svm)' /proc/cpuinfo
+  register: cpu
+- name: Config based cpu
+  init_files:
+    path: /etc/nova/nova-compute.conf
+    section: libvirt
+    option: virt_type
+    value: qemu
+  when: cpu > 0
+- name: Restart Compute service
+  command: service nova-compute restart
+- name: Perform on controller node
+  include_role:
+    name: compute-controller
+    tasks_from: other
+

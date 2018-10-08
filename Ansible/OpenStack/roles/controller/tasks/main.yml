@@ -1,0 +1,101 @@
+---
+- name: Install MariaDB
+  apt:
+    name: " {{ item }} "
+    update_cache: true
+    state: present
+  with_items:
+    - mariadb-server
+    - python-pymysql
+- name: Create file and edit mariadb conf
+  template:
+    src: 99-openstack.cnf
+    dest: /etc/mysql/mariadb.conf.d/99-openstack.cnf
+  notify: restart mysql
+- name: Secure the database service
+  command: mysql_secure_installation
+
+- name: Install RabbitMQ
+  apt: 
+    name: rabbitmq-server
+    state: present
+- name: Config RabbitMQ user
+  command: rabbitmqctl add_user openstack admin
+- name: Change permisson
+  command: rabbitmqctl set_permissions openstack ".*" ".*" ".*"
+- name: Install Memcached
+  apt:
+    name: " {{ item }} "
+    state: present
+  with_items:
+    - memcached
+    - python-memcache
+- name: Configure service use management IP 
+  lineinfile: dest=/etc/memcached.conf regexp="^-l 127.0.0.1" line="-l 10.10.0.10" state=present
+  notify: restart memcache
+- name: Login MariaDB
+  command: mysql -u root -padmin
+- name: Create DB for Keystone
+  command: CREATE DATABASE keystone;
+- name: Set permisson access keystone DB
+  command: " {{ item }} "
+  with_items:
+    - GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'localhost'  IDENTIFIED BY 'admin';
+    - GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'%' IDENTIFIED BY 'admin';
+    - FLUSH PRIVILEGES;
+    - exit; 
+- name: Install Keystone
+  apt:
+    name: " {{ item }} "
+    state: present
+  with_items:
+    - keystone
+    - apache2
+    - libapache2-mod-wsgi
+- name: Config Keystone
+  lineinfile:
+    path: /etc/keystone/keystone.conf
+    line: connection = mysql+pymysql://keystone:admin@controller/keystone
+    insertafter: '^[database]'
+- name: Config Keystone2
+  lineinfile:
+    path: /etc/keystone/keystone.conf
+    line: provider = fernet
+    insertafter: '^[token]'
+- name: Populate Identity service database
+  command: su -s /bin/sh -c "keystone-manage db_sync" keystone
+- name: Initalize Fernet key repository
+  command: " {{ item }} "
+  with_items:
+    - keystone-manage fernet_setup --keystone-user keystone --keystone-group keystone
+    - keystone-manage credential_setup --keystone-user keystone --keystone-group keystone
+- name: Bootstrap Identity service
+  command: keystone-manage bootstrap --bootstrap-password admin   --bootstrap-admin-url http://controller:35357/v3/   --bootstrap-internal-url http://controller:5000/v3/   --bootstrap-public-url http://controller:5000/v3/   --bootstrap-region-id RegionOne
+- name: Configure Apache HTTP server
+  lineinfile: 
+    path: /etc/apache2/apache2.conf
+    line: ServerName controller
+  notify: restart apache2
+- name: Configure administrative account
+  command: " {{ item }} "
+  with_items:
+    - export OS_USERNAME=admin
+    - export OS_PASSWORD=admin
+    - export OS_PROJECT_NAME=admin
+    - export OS_USER_DOMAIN_NAME=Default
+    - export OS_PROJECT_DOMAIN_NAME=Default
+    - export OS_AUTH_URL=http://controller:35357/v3
+    - export OS_IDENTITY_API_VERSION=3
+    - openstack project create --domain default  --description "Service Project" service
+    - openstack project create --domain default  --description "Demo Project" demo
+    - openstack user create --domain default --password admin demo
+    - openstack role create user
+    - openstack role add --project demo --user demo user
+- name: Create script admin for client 
+  template:
+    src: admin-openrc
+    dest: ~/admin-openrc
+- name: Create script demo for client
+  template:
+    src: demo-openrc
+    dest: ~/demo-openrc

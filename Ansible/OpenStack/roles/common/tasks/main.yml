@@ -1,0 +1,36 @@
+---
+- name: Update package
+  apt: 
+    update_cache: yes
+- name: Install chrony
+  apt:
+    name: chrony
+    state: present
+- name: Config chrony
+  lineinfile: dest=/etc/chrony/chrony.conf regexp="^pool 2.debian.pool.ntp.org offline iburst" line="#pool 2.debian.pool.ntp.org offline iburst" state=present
+- name: Config chrony2
+  blockinfile:
+    dest: /etc/chrony/chrony.conf
+    block: |
+      server 1.vn.poo.ntp.org iburst
+      server 0.asia.pool.ntp.org iburst
+      server 3.asia.pool.ntp.org iburst
+      allow 10.10.0.0/24
+  notify:
+    - restart chrony
+- name: Install OpenStack Pike, SQL database, RabbitMQ, Memcached
+  apt:
+    name: " {{ item }} "
+    update_cache: true
+    state: present
+  with_items:
+    - software-properties-common
+- name: Add repository for OpenStack Pike
+  command: add-apt-repository cloud-archive:pike -y 
+- name: Update repo of software
+  command: apt -y dist-upgrade
+- name: Install package OpenStack client
+  apt:
+    name: python-openstackclient
+    state: present 
+  notify: restart machine   

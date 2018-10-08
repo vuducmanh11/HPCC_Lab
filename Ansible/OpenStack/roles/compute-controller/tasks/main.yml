@@ -1,0 +1,253 @@
+---
+- name: Access DB with root
+  command: mysql -u root -padmin
+- name: Create DB nova_api, nova, nova_cell0
+  command: "{{ item }}"
+  with_items:
+    - CREATE DATABASE nova_api;
+    - CREATE DATABASE nova;
+    - CREATE DATABASE nova_cell0;
+- name: Change permission access DB
+  command: "{{ item }}"
+  with_items:
+    - GRANT ALL PRIVILEGES ON nova_api.* TO 'nova'@'localhost' IDENTIFIED BY 'admin';
+    - GRANT ALL PRIVILEGES ON nova_api.* TO 'nova'@'%' IDENTIFIED BY 'admin';
+    - GRANT ALL PRIVILEGES ON nova.* TO 'nova'@'localhost' IDENTIFIED BY 'admin';
+    - GRANT ALL PRIVILEGES ON nova.* TO 'nova'@'%' IDENTIFIED BY 'admin';
+    - GRANT ALL PRIVILEGES ON nova_cell0.* TO 'nova'@'localhost' IDENTIFIED BY 'admin';
+    - GRANT ALL PRIVILEGES ON nova_cell0.* TO 'nova'@'%' IDENTIFIED BY 'admin';
+    - FLUSH PRIVILEGES;
+    - EXIT;
+- name: Source admin credentials to gain access to admin-only CLI 
+  command: . admin-openrc
+- name: Create nova user 
+  command: openstack user create --domain default --password admin nova
+- name: add admin role to nova user
+  command: openstack role add --project service --user nova admin
+- name: create nova service entity
+  command: openstack service create --name nova --description "OpenStack Compute" compute
+- name: Create Compute API service endpoints
+  command: "{{ item }}"
+  with_items:
+    - openstack endpoint create --region RegionOne  compute public http://controller:8774/v2.1
+    - openstack endpoint create --region RegionOne  compute internal http://controller:8774/v2.1
+    - openstack endpoint create --region RegionOne  compute admin http://controller:8774/v2.1
+- name: Create a user Placement service user using pass
+  command: openstack user create --domain default --password admin placement
+- name: Add Placement user to admin role
+  command: openstack role add --project service --user placement admin
+- name: Create Placement API entry in service catalog
+  command: openstack service create --name placement --description "Placement API" placement 
+- name: Create Placement API service endpoint
+  command: "{{ item }}"
+  with_items:
+    - openstack endpoint create --region RegionOne placement public http://controller:8778
+    - openstack endpoint create --region RegionOne placement internal http://controller:8778
+    - openstack endpoint create --region RegionOne placement admin http://controller:8778
+- name: Install package nova
+  apt: 
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - nova-api
+    - nova-conductor
+    - nova-consoleauth
+    - nova-novncproxy
+    - nova-scheduler
+    - nova-placement-api
+- name: Edit /etc/nova/nova.conf
+  init_files:
+    path: /etc/nova/nova.conf
+    section: api_database
+    option: connection
+    value: mysql+pymysql://nova:admin@controller/nova_api
+    backup: yes
+- name: Edit continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: database
+    option: connection
+    value: mysql+pymysql://nova:admin@controller/nova
+- name: Edit continue
+  init_files: 
+    path: /etc/nova/nova.conf
+    section: DEFAULT
+    option: transport_url
+    value: rabbit://openstack:admin@controller
+- name: Edit continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: api
+    option: auth_strategy
+    value: keystone
+- name: Edit continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: keystone_authtoken
+    option: auth_uri
+    value: http://controller:5000
+- name: Edit continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: keystone_authtoken
+    option: auth_url     
+    value: http://controller:35357
+- name: Edit continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: keystone_authtoken
+    option: memcached_servers
+    value: controller:11211
+- name: Edit continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: keystone_authtoken
+    option: auth_type
+    value: password
+- name: Edit continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: keystone_authtoken
+    option: project_domain_name
+    value: default
+- name: Edit continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: keystone_authtoken
+    option: user_domain_name
+    value: default
+- name: Edit continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: keystone_authtoken
+    option: project_name
+    value: service
+- name: Edit continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: keystone_authtoken
+    option: username
+    value: nova
+- name: Edit continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: keystone_authtoken
+    option: password
+    value: NOVA_PASS
+- name: Edit continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: DEFAULT
+    option: my_ip
+    value: 10.10.0.10
+- name: Edit continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: DEFAULT
+    option: use_neutron     
+    value: True
+- name: Edit continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: DEFAULT
+    option: firewall_driver
+    value: nova.virt.firewall.NoopFirewallDriver
+- name: Edit continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: vnc
+    option: enabled
+    value: true
+- name: Edit continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: vnc
+    option: vncserver_listen
+    value: $my_ip
+- name: Edit continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: vnc
+    option: vncserver_proxyclient_address
+    value: $my_ip
+- name: Edit continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: glance
+    option: api_servers
+    value: http://controller:9292
+- name: Edit continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: oslo_concurrency
+    option: lock_path
+    value: /var/lib/nova/tmp
+- name: Remove log_dir bug
+  init_files:
+    path: /etc/nova/nova.conf
+    section: DEFAULT
+    option: log_dir
+- name: Edit continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: placement
+    option: os_region_name
+    value: RegionOne
+- name: Edit continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: placement
+    option: project_domain_name
+    value: Default
+- name: Edit continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: placement
+    option: project_name
+    value: service
+- name: Edit continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: placement
+    option: auth_type
+    value: password
+- name: Edit continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: placement
+    option: user_domain_name
+    value: Default
+- name: Edit continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: placement
+    option: auth_url
+    value: http://controller:35357/v3
+- name: Edit continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: placement
+    option: user_name
+    value: placement
+- name: Edit continue
+  init_files:
+    path: /etc/nova/nova.conf
+    section: placement
+    option: password
+    value: admin
+- name: Populate nova-api database
+  command: su -s /bin/sh -c "nova-manage api_db sync" nova
+- name: Register cell0 database
+  command: su -s /bin/sh -c "nova-manage cell_v2 map_cell0" nova
+- name: Create cell1 cell
+  command: su -s /bin/sh -c "nova-manage cell_v2 create_cell --name=cell1 --verbose" nova
+- name: Populate nova db
+  command: su -s /bin/sh -c "nova-manage db sync" nova
+- name: Verify nova cell0 and cell1
+  command: nova-manage cell_v2 list_cells
+  notify:
+    - restart nova-api
+    - restart nova-consoleauth
+    - restart nova-scheduler
+    - restart nova-conductor
+    - restart nova-novncproxy

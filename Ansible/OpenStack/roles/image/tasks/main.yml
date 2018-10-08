@@ -1,0 +1,185 @@
+---
+- name: Login mysql
+  command: mysql -u root -padmin
+- name: Create glance database
+  command: CREATE DATABASE glance;
+- name: Grant proper access to glance database
+  command: "{{ item }}"
+  with_items: 
+    - GRANT ALL PRIVILEGES ON glance.* TO 'glance'@'localhost'  IDENTIFIED BY 'admin';
+    - GRANT ALL PRIVILEGES ON glance.* TO 'glance'@'%'  IDENTIFIED BY 'admin';
+    - exit;
+- name: Source admin credentials
+  command: . admin-openrc
+- name: Create glance user
+  command: openstack user create --domain default --password admin glance
+- name: Add role to glance user and service project
+  command: openstack role add --project service --user glance admin
+- name: Create glance service entity
+  command: openstack service create --name glance  --description "OpenStack Image" image
+- name: Create endpoint for glance service
+  command: "{{ item }}"
+  with_items:
+    - openstack endpoint create --region RegionOne  image public http://controller:9292
+    - penstack endpoint create --region RegionOne   image internal http://controller:9292
+    - openstack endpoint create --region RegionOne  image admin http://controller:9292
+- name: Install package
+  apt:
+    name: glance
+    state: present
+- name: Edit glance-api.conf
+  ini_files:
+    path: /etc/glance/glance-api.conf
+    section: database
+    option: connection
+    value: mysql+pymysql://glance:admin@controller/glance
+    backup: yes
+- name: Edit continue
+  init_files:
+    path: /etc/glance/glance-api.conf
+    section: keystone_authtoken
+    option: auth_uri
+    value: http://controller:5000
+- name: Edit continue
+  init_files:
+    path: /etc/glance/glance-api.conf
+    section: keystone_authtoken
+    option: auth_url
+    value: http://controller:35357
+- name: Edit continue
+  init_files:
+    path: /etc/glance/glance-api.conf
+    section: keystone_authtoken
+    option: memcached_servers
+    value: controller:11211
+- name: Edit continue
+  init_files:
+    path: /etc/glance/glance-api.conf
+    section: keystone_authtoken
+    option: auth_type
+    value: password
+- name: Edit continue
+  init_files:
+    path: /etc/glance/glance-api.conf
+    section: keystone_authtoken
+    option: project_domain_name
+    value: default
+- name: Edit continue
+  init_files:
+    path: /etc/glance/glance-api.conf
+    section: keystone_authtoken
+    option: user_domain_name
+    value: default
+- name: Edit continue
+  init_files:
+    path: /etc/glance/glance-api.conf
+    section: keystone_authtoken
+    option: project_name
+    value: service
+- name: Edit continue
+  init_files:
+    path: /etc/glance/glance-api.conf
+    section: keystone_authtoken
+    option: username
+    value: glance
+- name: Edit continue
+  init_files:
+    path: /etc/glance/glance-api.conf
+    section: keystone_authtoken
+    option: password
+    value: admin
+- name: Edit paste_deploy
+  init_files:
+    path: /etc/glance/glance-api.conf
+    section: paste_deploy
+    option: flavor
+    value: keystone
+- name: Edit continue
+  init_files:
+    path: /etc/glance/glance-api.conf
+    section: glance_store
+    option: stores
+    value: file,http
+- name: Edit continue
+  init_files:
+    path: /etc/glance/glance-api.conf
+    section: glance_store
+    option: default_store
+    value: file
+- name: Edit continue
+  init_files:
+    path: /etc/glance/glance-api.conf
+    section: glance_store
+    option: filesystem_store_datadir
+    value: /var/lib/glance/images/
+- name: Edit glance-registry.conf
+  init_files:
+    path: /etc/glance/glance-registry.conf
+    section: database
+    option: connection
+    value: mysql+pymysql://glance:admin@controller/glance
+- name: Edit continue
+  init_files:
+    path: /etc/glance/glance-registry.conf
+    section: keystone_authtoken
+    option: auth_uri
+    value: http://controller:5000
+- name: Edit continue
+  init_files:
+    path: /etc/glance/glance-registry.conf
+    section: keystone_authtoken
+    option: auth_url
+    value: http://controller:35357
+- name: Edit continue
+  init_files:
+    path: /etc/glance/glance-registry.conf
+    section: keystone_authtoken
+    option: memcached_servers
+    value: controller:11211
+- name: Edit continue
+  init_files:
+    path: /etc/glance/glance-registry.conf
+    section: keystone_authtoken
+    option: auth_type
+    value: password
+- name: Edit continue
+  init_files: 
+    path: /etc/glance/glance-registry.conf
+    section: keystone_authtoken
+    option: project_domain_name
+    value: default
+- name: Edit continue
+  init_files:
+    path: /etc/glance/glance-registry.conf
+    section: keystone_authtoken
+    option: user_domain_name
+    value: default
+- name: Edit continue
+  init_files:
+    path: /etc/glance/glance-registry.conf
+    section: keystone_authtoken
+    option: project_name
+    value: service
+- name: Edit continue
+  init_files:
+    path: /etc/glance/glance-registry.conf
+    section: keystone_authtoken
+    option: username
+    value: glance
+- name: Edit continue
+  init_files:
+    path: /etc/glance/glance-registry.conf
+    section: keystone_authtoken
+    option: password
+    value: admin
+- name: Edit continue
+  init_files:
+    path: /etc/glance/glance-registry.conf
+    section: paste_deploy
+    option: flavor
+    value: keystone 
+- name: Populate Image service database
+  command: su -s /bin/sh -c "glance-manage db_sync" glance
+  notify:
+    - restart glance-registry
+    - restart glance-api

@@ -1,0 +1,21 @@
+---
+- hosts: all
+  roles:
+    - role: common
+- hosts: controller
+  roles:
+    - role: controller
+    - role: image
+    - role: compute-controller
+- hosts: compute
+  roles:
+    - role: compute-compute
+- hosts: controller
+  roles:
+    - role: networking-controller   
+- hosts: compute
+  roles:
+    - role: networking-compute 
+- hosts: controller
+  roles:
+    - role: horizon
