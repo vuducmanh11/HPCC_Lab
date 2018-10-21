@@ -1,0 +1,12 @@
+ansible_ssh_user: ubuntu
+ansible_ssh_private_key_file: cloud-team.pem
+RABBIT_PASS: admin
+NOVA_PASS: admin
+MANAGEMENT_IP: 10.1.1.61
+PLACEMENT_PASS: admin
+NEUTRON_DBPASS: admin
+NEUTRON_PASS: admin
+PROVIDER_INTERFACE_NAME: ens3
+OVERLAY_INTERFACE_IP_ADDRESS: 10.1.1.61
+ADMIN_PASS: admin
+

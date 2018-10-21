@@ -1,0 +1,7 @@
+---
+- name: restart mysql
+  service: name=mysql state=restarted
+- name: restart memcache
+  service: name=memcached state=restarted
+- name: restart apache2
+  service: name=apache2 state=restarted

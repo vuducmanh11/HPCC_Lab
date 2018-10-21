@@ -1,9 +1,8 @@
 ---
-# - name: Install the packages
-#   apt:
-#     name: openstack-dashboard
-#     update_cache: true
-#     state: present
+- name: Install the packages
+  apt:
+    name: openstack-dashboard
+    state: present
 - name: Edit local_settings.py
   template:
     src: local_settings.py
@@ -12,7 +11,6 @@
   lineinfile: 
     path: /etc/apache2/conf-available/openstack-dashboard.conf
     line: WSGIApplicationGroup %{GLOBAL}
-    state: present
 - name: Reload web server
   command: service apache2 reload
 

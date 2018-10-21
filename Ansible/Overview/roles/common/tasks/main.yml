@@ -15,19 +15,22 @@
       server 1.vn.poo.ntp.org iburst
       server 0.asia.pool.ntp.org iburst
       server 3.asia.pool.ntp.org iburst
-      allow {{ RANGE_MANAGEMENT }}
+      allow 10.10.0.0/24
   notify:
     - restart chrony
 - name: Install OpenStack Pike, SQL database, RabbitMQ, Memcached
   apt:
-    name: software-properties-common
+    name: " {{ item }} "
     update_cache: true
     state: present
+  with_items:
+    - software-properties-common
 - name: Add repository for OpenStack Pike
   command: add-apt-repository cloud-archive:pike -y 
 - name: Update repo of software
   command: apt -y dist-upgrade
-- name: Install OpenStack client
+- name: Install package OpenStack client
   apt:
     name: python-openstackclient
-    state: present
+    state: present 
+  notify: restart machine   

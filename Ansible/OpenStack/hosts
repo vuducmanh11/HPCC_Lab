@@ -1,5 +1,5 @@
 [controller]
-10.10.0.10
+25.14.244.236 ansible_user=ubuntu ansible_become=true ansible_sudo_pass=abc123
 
 [compute]
-10.10.0.11
+25.58.167.167 ansible_user=ubuntu ansible_become=true ansible_sudo_pass=abc123

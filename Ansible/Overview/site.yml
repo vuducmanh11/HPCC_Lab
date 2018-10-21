@@ -4,19 +4,18 @@
     - role: common
 - hosts: controller
   roles:
-    - role: keystone
-    - role: glance
-    - role: nova-controller
+    - role: controller
+    - role: image
+    - role: compute-controller
 - hosts: compute
   roles:
-    - role: nova-compute
+    - role: compute-compute
 - hosts: controller
   roles:
-    - role: nova-final
-    - role: neutron-controller   
+    - role: networking-controller   
 - hosts: compute
   roles:
-    - role: neutron-compute 
+    - role: networking-compute 
 - hosts: controller
   roles:
     - role: horizon

@@ -1,0 +1,26 @@
+ansible_ssh_user: ubuntu
+ansible_ssh_private_key_file: cloud-team.pem
+ROOT: abc123
+DBMARIA: admin
+MANAGEMENT_IP: 10.1.1.60
+RABBIT_PASS: admin
+KEYSTONE_DBPASS: admin
+ADMIN_PASS: admin
+DEMO_PASS: admin
+GLANCE_DBPASS: admin
+NOVA_DBPASS: admin
+NOVA_PASS: admin
+PLACEMENT_PASS: admin
+NEUTRON_DBPASS: admin
+NEUTRON_PASS: admin
+PROVIDER_INTERFACE_NAME: ens3
+OVERLAY_INTERFACE_IP_ADDRESS: 10.1.1.60
+METADATA_SECRET: admin
+OS_USERNAME: admin
+OS_PASSWORD: "{{ADMIN_PASS}}"
+OS_PROJECT_NAME: admin
+OS_USER_DOMAIN_NAME: Default
+OS_PROJECT_DOMAIN_NAME: Default
+OS_AUTH_URL: http://controller:35357/v3
+OS_IDENTITY_API_VERSION: 3
+

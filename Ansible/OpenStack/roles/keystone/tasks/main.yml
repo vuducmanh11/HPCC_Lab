@@ -1,0 +1,113 @@
+---
+- name: Install MariaDB
+  apt:
+    name: "{{ item }}"
+    update_cache: true
+    state: present
+  with_items:
+    - mariadb-server
+    - python-pymysql
+- name: Create file and edit mariadb conf
+  template:
+    src: 99-openstack.cnf
+    dest: /etc/mysql/mariadb.conf.d/99-openstack.cnf
+  notify: restart mysql
+  #- name: Secure the database service
+
+- name: Install RabbitMQ
+  apt: 
+    name: rabbitmq-server
+    state: present
+- name: Delete user if existed
+  command: rabbitmqctl delete_user openstack
+- name: Config RabbitMQ user
+  command: rabbitmqctl add_user openstack "{{ RABBIT_PASS }}"
+- name: Change permisson
+  command: rabbitmqctl set_permissions openstack ".*" ".*" ".*"
+- name: Install Memcached
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - memcached
+    - python-memcache
+- name: Configure service use management IP 
+  lineinfile: 
+    path: /etc/memcached.conf 
+    regexp: "^-l 127.0.0.1" 
+    line: "-l {{ MANAGEMENT_IP }}" 
+    state: present
+  notify: restart memcache
+- name: Drop DB keystone if exists
+  command: mysql --execute="DROP DATABASE IF EXISTS keystone"
+  #  become: true
+- name: Create DB for Keystone
+  command: mysql --execute="CREATE DATABASE keystone"
+- name: Set permisson access keystone DB
+  command: mysql --execute="{{ item }}"
+  with_items:
+    - GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'localhost'  IDENTIFIED BY '{{ KEYSTONE_DBPASS }}';
+    - GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'%' IDENTIFIED BY '{{ KEYSTONE_DBPASS }}';
+    - FLUSH PRIVILEGES;
+      #    - exit; 
+- name: Install Keystone
+  apt:
+    name: "{{item}}"
+    state: present
+  with_items:
+    - keystone
+    - apache2
+    - libapache2-mod-wsgi
+- name: Config Keystone
+  ini_file:
+    path: /etc/keystone/keystone.conf
+    section: database
+    option: connection
+    value: mysql+pymysql://keystone:{{ KEYSTONE_DBPASS }}@controller/keystone
+- name: Config Keystone2
+  ini_file:
+    path: /etc/keystone/keystone.conf
+    section: token
+    option: provider 
+    value: fernet
+- name: Populate Identity service database
+  command: su -s /bin/sh -c "keystone-manage db_sync" keystone
+- name: Initalize Fernet key repository
+  command: "{{item}}"
+  with_items:
+    - keystone-manage fernet_setup --keystone-user keystone --keystone-group keystone
+    - keystone-manage credential_setup --keystone-user keystone --keystone-group keystone
+- name: Bootstrap Identity service
+  command: keystone-manage bootstrap --bootstrap-password {{ ADMIN_PASS }}   --bootstrap-admin-url http://controller:35357/v3/   --bootstrap-internal-url http://controller:5000/v3/   --bootstrap-public-url http://controller:5000/v3/   --bootstrap-region-id RegionOne
+- name: Configure Apache HTTP server
+  lineinfile: 
+    path: /etc/apache2/apache2.conf
+    line: ServerName controller
+- name: Restart apache2
+  command: service apache2 restart
+- name: Configure administrative account
+#  shell: openstack project create --domain default  --description "Service Project" service
+  command: "{{item}}"
+  with_items: 
+    - openstack project create --domain default  --description "Service Project" service
+    - openstack project create --domain default  --description "Demo Project" demo
+    - openstack user create --domain default --password admin demo
+    - openstack role create user
+    - openstack role add --project demo --user demo user
+  environment:
+    OS_USERNAME: admin
+    OS_PASSWORD: "{{ADMIN_PASS}}"
+    OS_PROJECT_NAME: admin
+    OS_USER_DOMAIN_NAME: Default
+    OS_PROJECT_DOMAIN_NAME: Default
+    OS_AUTH_URL: http://controller:35357/v3
+    OS_IDENTITY_API_VERSION: 3
+
+- name: Create script admin for client 
+  template:
+    src: admin-openrc
+    dest: ~/admin-openrc
+- name: Create script demo for client
+  template:
+    src: demo-openrc
+    dest: ~/demo-openrc
